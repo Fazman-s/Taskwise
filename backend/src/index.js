@@ -1,13 +1,15 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const connectDB = require('./db');
 const Message = require('./models/Message');
 const User = require('./models/User');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'TASK_MANAGER_SECRET'; // hard-coded
-const PORT = 5000; // hard-coded
 const bcrypt = require('bcryptjs');
+
+// Load env vars
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -26,7 +28,7 @@ app.use(express.json());
 // Connect to MongoDB
 connectDB();
 
-// Routes
+// Routes (to be implemented)
 const taskRoutes = require('./routes/tasks');
 const chatRoutes = require('./routes/chat');
 app.use('/api/tasks', taskRoutes);
@@ -54,18 +56,20 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// Socket.io events
+// Socket.io events (to be implemented)
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
+  // Listen for chat messages
   socket.on('chatMessage', async (data) => {
+    // data: { content, sender, task }
     try {
       const message = new Message({
         content: data.content,
@@ -73,7 +77,7 @@ io.on('connection', (socket) => {
         task: data.task || undefined,
       });
       await message.save();
-      io.emit('chatMessage', message);
+      io.emit('chatMessage', message); // broadcast to all clients
     } catch (err) {
       console.error('Error saving message:', err.message);
     }
@@ -84,6 +88,7 @@ io.on('connection', (socket) => {
   });
 });
 
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
