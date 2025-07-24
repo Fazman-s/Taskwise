@@ -19,16 +19,20 @@ export default function Dashboard() {
 
   const token = localStorage.getItem('token');
 
+  // Access the environment variable here, at the top of the component
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
   useEffect(() => {
     if (!token) return navigate('/login');
     fetchTasks();
     // eslint-disable-next-line
-  }, []);
+  }, [token]); // Added token to dependency array as it's used inside fetchTasks
 
   const fetchTasks = async () => {
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/tasks', {
+      // Use API_BASE_URL
+      const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
@@ -43,7 +47,8 @@ export default function Dashboard() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/tasks', {
+      // Use API_BASE_URL
+      const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +71,8 @@ export default function Dashboard() {
     const newIndex = currentIndex + direction;
     if (newIndex < 0 || newIndex >= statusList.length) return;
     try {
-      await fetch(`http://localhost:5000/api/tasks/${task._id}`, {
+      // Use API_BASE_URL
+      await fetch(`${API_BASE_URL}/api/tasks/${task._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -82,11 +88,12 @@ export default function Dashboard() {
 
   const handleDelete = async (taskId) => {
     try {
-      await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      // Use API_BASE_URL
+      await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      fetchTasks();
+      fetchTasks(); // Re-fetch tasks to update the UI
     } catch (err) {
       setError('Failed to delete task');
     }
@@ -101,7 +108,8 @@ export default function Dashboard() {
   const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`http://localhost:5000/api/tasks/${editId}`, {
+      // Use API_BASE_URL
+      await fetch(`${API_BASE_URL}/api/tasks/${editId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -122,6 +130,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Kanban Board</h1>
+        {/* ... rest of your JSX ... */}
         <form onSubmit={handleAddTask} className="flex gap-4 mb-8">
           <input
             type="text"
