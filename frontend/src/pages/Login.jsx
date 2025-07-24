@@ -7,21 +7,39 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Access the environment variable. For Vite, it's import.meta.env
+  // When running locally, if you have frontend/.env with VITE_BACKEND_URL=http://localhost:5000, it will use that.
+  // When deployed on Netlify, it will use the value you set in Netlify's environment variables.
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      // Use the API_BASE_URL here
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Login failed');
+
+      // Your error handling logic for the response itself
+      if (!res.ok) {
+        // If the server responded with an error status (e.g., 401, 400)
+        throw new Error(data.message || 'Login failed due to server error.');
+      }
+
+      // If res.ok is true and you have the token, then login was successful
       localStorage.setItem('token', data.token);
       navigate('/dashboard');
+
     } catch (err) {
-      setError(err.message);
+      // This catch block handles network errors (like 'Failed to fetch' if the server is unreachable)
+      // or errors thrown by 'throw new Error(data.message)' if res.ok was false.
+      console.error("Login attempt error:", err); // Log the error for debugging
+      setError(err.message || 'Failed to connect to the server. Please try again.');
     }
   };
 
@@ -53,4 +71,4 @@ export default function Login() {
       </form>
     </div>
   );
-} 
+}
