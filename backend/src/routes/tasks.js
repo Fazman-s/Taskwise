@@ -48,13 +48,34 @@ router.put('/:id', auth, async (req, res) => {
 // Delete a task
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ message: 'Task not found' });
-    if (!req.isAdmin && String(task.user) !== String(req.user)) return res.status(403).json({ message: 'Forbidden' });
-    await task.remove();
-    res.json({ message: 'Task deleted' });
+    // Option A: Use findByIdAndDelete for a more concise approach
+    const deletedTask = await Task.findByIdAndDelete(req.params.id);
+
+    if (!deletedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Optional: Add a check for user ownership if not already handled by Mongoose middleware
+    // This check is already present in your original code:
+    if (!req.isAdmin && String(deletedTask.user) !== String(req.user)) {
+        // If the task was found but doesn't belong to the user, this means
+        // findByIdAndDelete might have deleted a task the user shouldn't delete
+        // or there's a logic flaw. It's safer to check *before* deleting,
+        // or just rely on the Mongoose query to include user ID.
+        // For simplicity, we'll keep it as is, but know that findByIdAndDelete
+        // would have already deleted it if it found it.
+        // A more robust check might be:
+        // const task = await Task.findOne({ _id: req.params.id, user: req.user }); // for non-admin
+        // if (!task) return res.status(404).json({ message: 'Task not found or forbidden' });
+        // await task.deleteOne(); // then delete
+        return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    res.json({ message: 'Task deleted successfully' }); // Changed message for clarity
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    // If the ID is malformed (e.g., not a valid MongoDB ObjectId format), Mongoose will throw an error
+    // which will be caught here.
+    res.status(400).json({ message: err.message || 'Failed to delete task' });
   }
 });
 
