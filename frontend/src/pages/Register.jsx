@@ -8,22 +8,36 @@ export default function Register() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  // Access the environment variable
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      // Use the API_BASE_URL here
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Registration failed');
+
+      const data = await res.json(); // Always parse response, even if it's an error
+
+      if (!res.ok) {
+        // If the server responded with an error status (e.g., 400 Bad Request, 409 Conflict)
+        throw new Error(data.message || 'Registration failed.');
+      }
+
+      // If res.ok is true, then registration was successful
       setSuccess('Registration successful! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1500);
+
     } catch (err) {
-      setError(err.message);
+      // This catch block handles network errors or errors thrown above
+      console.error("Registration attempt error:", err); // Log the error for debugging
+      setError(err.message || 'Failed to connect to the server. Please try again.');
     }
   };
 
@@ -56,4 +70,4 @@ export default function Register() {
       </form>
     </div>
   );
-} 
+}
