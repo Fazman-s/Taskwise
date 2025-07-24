@@ -5,3 +5,10 @@
 
 [build.environment]
   VITE_BACKEND_URL = "https://taskwise-3tol.onrender.com"
+
+# --- Add this section below the existing content ---
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
